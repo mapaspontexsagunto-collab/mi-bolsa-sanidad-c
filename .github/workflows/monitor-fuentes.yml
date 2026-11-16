@@ -1,0 +1,28 @@
+name: Monitor de fuentes oficiales
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '25 6 * * *'
+permissions:
+  contents: read
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comprobar accesibilidad sin extraer datos personales
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p informe
+          printf 'Fecha UTC: %s\n' "$(date -u +%FT%TZ)" > informe/estado.txt
+          for url in \
+            'https://www.san.gva.es/es/web/recursos-humans/activacion-o-desactivacion-de-bolsa' \
+            'https://www.san.gva.es/downloads/csportales/recursos-humans/es/listaContratadosCategoriaPaso2.html'; do
+            code=$(curl -L -sS --max-time 30 -o /dev/null -w '%{http_code}' "$url" || true)
+            printf '%s | HTTP %s\n' "$url" "$code" >> informe/estado.txt
+          done
+          cat informe/estado.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: estado-fuentes-oficiales
+          path: informe/estado.txt
