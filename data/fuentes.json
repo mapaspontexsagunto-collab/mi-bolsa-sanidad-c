@@ -1,0 +1,20 @@
+{
+  "verificado": "2026-11-17",
+  "edicion": "2025.0.7",
+  "entrada_vigor": "2026-11-16",
+  "fuentes": [
+    {
+      "tipo": "consulta_oficial",
+      "url": "https://svsiscv.san.gva.es/btt-consulta/pages/index.xhtml?idioma=es&iframe=1&version=0",
+      "incluye": [
+        "baremaciones",
+        "posiciones",
+        "situacion",
+        "nombramientos"
+      ]
+    }
+  ],
+  "extraccion_automatica_validada": false,
+  "registros_importados": 0,
+  "nota": "No se han descargado datos de candidatos. No usar este archivo como resultados."
+}
