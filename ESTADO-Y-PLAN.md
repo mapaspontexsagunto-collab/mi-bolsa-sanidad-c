@@ -1,20 +1,10 @@
-# Mi Bolsa Sanidad CV — estado y plan
+# Estado y plan
 
-La interfaz actual busca en `data/resultados.json`, pero **no se han obtenido ni verificado los listados oficiales**. No se deben mostrar datos inventados.
+## Hecho
+- PWA con importación manual asistida, instantáneas locales, posición, percentil, distribución de puntos y comparación entre quincenas (solo recuentos).
+- Categorías: TCAE y T.E. en Imagen para el Diagnóstico y Medicina Nuclear.
 
-## Fuentes oficiales
-- https://www.san.gva.es/es/web/recursos-humans/consultas
-- https://www.san.gva.es/downloads/csportales/recursos-humans/es/listaContratadosCategoriaPaso2.html
-- https://www.san.gva.es/es/web/recursos-humans/activacion-o-desactivacion-de-bolsa
-
-## Trabajo pendiente
-1. Verificar un método autorizado para obtener datos de todas las categorías y departamentos, sin eludir CAPTCHA ni autenticación.
-2. Normalizar los registros oficiales, incluyendo fecha y fuente de cada dato.
-3. Evitar confundir personas con apellidos coincidentes.
-4. Respetar privacidad y condiciones de reutilización antes de publicar datos nominativos en GitHub Pages.
-5. Calcular percentiles y distribuciones con la población y cobertura explícitas.
-6. Comparar estados entre quincenas y contrataciones sin asumir que toda persona contratada sigue no disponible.
-7. Publicar en GitHub Pages cuando la consulta real esté verificada.
-
-## Automatización incorporada
-`.github/workflows/monitor-fuentes.yml` comprueba diariamente la accesibilidad de dos páginas públicas. **No descarga listados ni actualiza candidatos**. El resultado se consulta en la pestaña Actions.
+## Pendiente / sin verificar
+- El extractor se probó con una tabla simulada (basada en el formato público histórico), **no con la tabla real de la consulta oficial** (requiere CAPTCHA). Si las columnas no se detectan, revisar "Columnas detectadas" en *Importar* y ajustar `COLS` en `lib.js`.
+- Predictor de llamada implementado; su importación de nombramientos tampoco se ha probado con la tabla real (misma salvedad que el extractor).
+- Las páginas estáticas de `/downloads/csportales/recursos-humans/es/listas/...` son de julio de 2025 (edición 2024.0): no usar.
