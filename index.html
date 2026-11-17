@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#075e83"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.svg">
+<meta name="theme-color" content="#075e83"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
 <title>Mi Bolsa Sanidad CV</title><link rel="stylesheet" href="style.css"></head>
 <body>
 <header><h1>♥ Mi Bolsa Sanidad CV</h1><p>Consulta independiente · tus datos solo se guardan en este dispositivo</p></header>
@@ -18,6 +18,7 @@
 <div class="card"><h2>2. Pega la captura</h2>
 <textarea id="pegado" placeholder="Pega aquí la captura copiada"></textarea>
 <button id="btnLeer">Leer captura</button>
+<label>Tipo de captura<select id="selTipo"><option value="lista">Lista de candidatos (consulta de situación)</option><option value="contratos">Nombramientos recientes (para el predictor)</option></select></label>
 <div id="prev" hidden>
 <p id="prevInfo" class="muted"></p>
 <label>Categoría<select id="selCat"></select></label>

@@ -14,6 +14,7 @@
     ['situacion', /^(SITUACION|ESTADO)/],
     ['categoria', /^CATEGORIA/],
     ['departamento', /^(DEPARTAMENTO|DPTO)/],
+    ['fecha', /^FECHA/],
     ['puntos', /(PUNTUACION|PUNTOS|BAREMO|TOTAL)/]
   ];
 
@@ -70,6 +71,10 @@
     return null;
   }
 
+  function toIso(v) {
+    const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(v || ''); return m ? `${m[3]}-${m[2]}-${m[1]}` : (/^\d{4}-\d{2}-\d{2}/.test(v || '') ? v.slice(0, 10) : null);
+  }
+
   function parseCapture(p) {
     if (!p || p.v !== 1 || !Array.isArray(p.rows) || !Array.isArray(p.headers)) throw new Error('Formato de captura no válido');
     const map = mapHeaders(p.headers);
@@ -82,6 +87,7 @@
       });
       o.orden = num(o.orden);
       o.puntos = num(o.puntos);
+      if (o.fecha !== undefined) o.fecha = toIso(o.fecha);
       if (!o.nombre) continue;
       rows.push(o);
     }
@@ -152,6 +158,28 @@
     return { empezaron, terminaron, transiciones: Object.entries(trans).sort((a, b) => b[1] - a[1]) };
   }
 
-  const api = { norm, CATEGORIAS, DEPARTAMENTOS, parseCapture, mergeRows, groupKey, matchPerson, situacionResumen, percentil, distribucion, compararQuincenas, num };
+  // Predictor: ciclos mensuales de nombramientos de una bolsa (solo órdenes y recuentos).
+  function predictor(contratos, cat, dep, miOrden) {
+    const d = norm(dep), seen = new Set(), meses = new Map();
+    for (const r of contratos) {
+      const k = [norm(r.nombre), r.fecha, r.orden].join('|'); if (seen.has(k)) continue; seen.add(k);
+      if (r.categoria && detectCategoria(r.categoria) !== cat) continue;
+      if (r.departamento) { const rd = norm(r.departamento); if (rd !== d && !rd.includes(d) && !d.includes(rd)) continue; }
+      if (!r.fecha) continue;
+      const m = r.fecha.slice(0, 7);
+      if (!meses.has(m)) meses.set(m, { mes: m, n: 0, hasta: null });
+      const c = meses.get(m); c.n++;
+      if (r.orden != null && (c.hasta == null || r.orden > c.hasta)) c.hasta = r.orden;
+    }
+    const ciclos = [...meses.values()].sort((a, b) => b.mes.localeCompare(a.mes));
+    const hs = ciclos.map(c => c.hasta).filter(x => x != null);
+    if (!hs.length) return { ciclos, media: null, max: null, ultimo: null, veredicto: null };
+    const media = Math.round(hs.reduce((a, b) => a + b, 0) / hs.length), max = Math.max(...hs), ultimo = ciclos.find(c => c.hasta != null).hasta;
+    let veredicto = null;
+    if (miOrden != null) veredicto = miOrden <= ultimo ? 'Probable' : miOrden <= max ? 'Posible' : 'Improbable';
+    return { ciclos, media, max, ultimo, veredicto };
+  }
+
+  const api = { predictor, detectCategoria, toIso, norm, CATEGORIAS, DEPARTAMENTOS, parseCapture, mergeRows, groupKey, matchPerson, situacionResumen, percentil, distribucion, compararQuincenas, num };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.BolsaLib = api;
 })(typeof self !== 'undefined' ? self : this);

@@ -44,6 +44,15 @@
     } catch (e) { $('prev').hidden = true; m.textContent = 'No se pudo leer: ' + e.message; }
   };
   $('btnGuardar').onclick = async () => {
+    const tipo = $('selTipo').value;
+    if (tipo === 'contratos') {
+      const fecha = $('selFecha').value, cat = $('selCat').value, id = 'C|' + cat + '|' + fecha;
+      const prev = (await allSnaps()).find(s => s.id === id);
+      const seen = new Set(), rows = [];
+      for (const r of (prev ? prev.rows : []).concat(pendiente.rows)) { const k = [L.norm(r.nombre), r.fecha, r.orden].join('|'); if (!seen.has(k)) { seen.add(k); rows.push(r); } }
+      await putSnap({ id, kind: 'contratos', cat, fecha, rows });
+      $('impMsg').textContent = `Guardados ${rows.length} nombramientos.`; $('prev').hidden = true; $('pegado').value = ''; pendiente = null; return;
+    }
     const dep = $('selDep').value.trim(); if (!dep) { $('impMsg').textContent = 'Indica el departamento.'; return; }
     const cat = $('selCat').value, turno = $('selTurno').value, fecha = $('selFecha').value;
     const key = L.groupKey(cat, dep, turno), id = key + '|' + fecha;
@@ -78,7 +87,7 @@
     return g;
   }
   async function render() {
-    const snaps = await allSnaps(), perfil = await getMeta('perfil');
+    const todas = await allSnaps(), snaps = todas.filter(s => s.kind !== 'contratos'), perfil = await getMeta('perfil');
     const av = $('aviso'), cont = $('lista'); $('detalle').innerHTML = ''; cont.innerHTML = '';
     if (!perfil || !perfil.apellidos) { av.hidden = false; av.textContent = 'Indica en Ajustes los apellidos y nombre a seguir.'; return; }
     if (!snaps.length) { av.hidden = false; av.textContent = 'Aún no hay datos. Ve a Importar para cargar un listado oficial.'; return; }
@@ -92,11 +101,11 @@
       else if (me.length > 1) body = `<div class="alert">${me.length} coincidencias con ese nombre. Completa el nombre en Ajustes.</div>`;
       else body = `<div class="muted">No aparece en el listado cargado (${esc(last.fecha)}). Eso no implica que no esté inscrita.</div>`;
       el.innerHTML = `<div class="cat">${esc(nomCat(last.cat))}</div><div class="dep">${esc(last.dep)} ${last.turno === 'M' ? '· Promoción interna' : ''}</div>${body}`;
-      el.onclick = () => detalle(list, me[0]);
+      el.onclick = () => detalle(list, me[0], todas.filter(s => s.kind === 'contratos' && s.cat === last.cat).flatMap(s => s.rows));
       cont.appendChild(el);
     }
   }
-  function detalle(list, me) {
+  function detalle(list, me, contratos) {
     const last = list[list.length - 1], d = $('detalle');
     let h = `<div class="card"><h2>${esc(last.dep)} · ${esc(nomCat(last.cat))}</h2>`;
     if (me) {
@@ -113,6 +122,14 @@
       const prev = list[list.length - 2], c = L.compararQuincenas(prev.rows, last.rows);
       h += `<p class="muted">${esc(prev.fecha)} → ${esc(last.fecha)}. Solo recuentos.</p><div class="row"><div><div class="big">${c.empezaron}</div><div class="muted">pasaron a ACTIVO</div></div><div><div class="big">${c.terminaron}</div><div class="muted">dejaron ACTIVO</div></div></div>` +
         c.transiciones.slice(0, 10).map(([k, v]) => `<div class="row"><span>${esc(k)}</span><b>${v}</b></div>`).join('');
+    }
+    h += '<h2 style="margin-top:16px">Predictor de llamada</h2>';
+    const pr = L.predictor(contratos || [], last.cat, last.dep, me && me.orden);
+    if (!contratos || !contratos.length) h += '<p class="muted">Importa la lista de nombramientos (Importar → tipo «Nombramientos recientes») para activarlo.</p>';
+    else if (!pr.ciclos.length || pr.media == null) h += '<p class="muted">No hay nombramientos de este departamento con número de orden reconocible.</p>';
+    else {
+      h += (pr.veredicto ? `<p class="big">${esc(pr.veredicto)}</p>` : '') + `<p class="muted">Media #${pr.media} · Máx. #${pr.max} · Último ciclo #${pr.ultimo}${me && me.orden ? ' · Tú #' + me.orden : ''}. Orientativo: los contratos pasados no garantizan los futuros.</p>` +
+        pr.ciclos.map(c => `<div class="row"><span>${esc(c.mes)} · ${c.n} contratos</span><b>hasta #${esc(c.hasta ?? '—')}</b></div>`).join('');
     }
     d.innerHTML = h + '</div>'; d.scrollIntoView({ behavior: 'smooth' });
   }
