@@ -1,0 +1,10 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Instalar extractor</title><link rel="stylesheet" href="style.css"></head>
+<body><header><h1>Instalar marcador «Capturar bolsa»</h1></header><main>
+<div class="card"><p>Es un marcador que lee la tabla que <b>tú</b> ya has abierto en la web oficial tras resolver el CAPTCHA. No hace peticiones a ningún sitio.</p>
+<ol><li>Pulsa <b>Copiar código</b>.</li><li>Guarda cualquier página como marcador (Safari: Compartir → Añadir marcador; Chrome: ⭐).</li><li>Edita el marcador: nombre «Capturar bolsa» y, en la dirección, <b>pega el código</b>.</li><li>En la web oficial, con el listado visible, abre el marcador (Safari: Marcadores; Chrome Android: escribe «Capturar» en la barra y elígelo).</li></ol>
+<button id="cp">Copiar código</button><textarea id="code" readonly style="margin-top:10px"></textarea><p id="m" class="muted"></p>
+<p><a href="index.html">← Volver</a></p></div></main>
+<script>
+fetch('extractor.js').then(r=>r.text()).then(t=>{const c='javascript:'+encodeURIComponent(t.replace(/\n/g,''));code.value=c});
+cp.onclick=async()=>{code.select();try{await navigator.clipboard.writeText(code.value);m.textContent='Copiado.'}catch(e){document.execCommand('copy');m.textContent='Si no se copió, mantén pulsado el texto y elige Copiar.'}};
+</script></body></html>

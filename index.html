@@ -1,16 +1,44 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mi Bolsa Sanidad CV</title><style>
-:root{font-family:system-ui,-apple-system,sans-serif;color:#182b3d;background:#f2f6fa}*{box-sizing:border-box}body{margin:0}header{background:#075e83;color:white;padding:24px 16px}main{max-width:760px;margin:auto;padding:18px}h1{margin:0;font-size:1.5rem}p{line-height:1.5}.card{background:white;border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 2px 12px #16344b12}label{display:block;margin:12px 0 5px;font-weight:600}input{width:100%;padding:13px;border:1px solid #b9c9d5;border-radius:9px;font-size:1rem}button{background:#006f9b;color:white;border:0;padding:14px;border-radius:10px;font-size:1rem;font-weight:700;width:100%;margin-top:17px;cursor:pointer}button:disabled{opacity:.55}.muted{color:#546779;font-size:.9rem}.alert{background:#fff4db;border-left:4px solid #d39a27;padding:12px;border-radius:6px}.result{border-top:1px solid #dde5ea;padding:13px 0}.pill{display:inline-block;background:#e6f1f7;border-radius:20px;padding:4px 9px;font-size:.8rem}a{color:#006a94}small{display:block;margin-top:12px}</style></head>
-<body><header><div style="max-width:760px;margin:auto"><h1>♥ Mi Bolsa Sanidad CV</h1><div>Consulta independiente · Sin publicidad</div></div></header><main>
-<section class="card"><h2>Buscar en la bolsa</h2><p class="muted">Escribe el nombre tal como figura en los listados oficiales.</p><form id="form"><label for="a1">Primer apellido</label><input id="a1" autocomplete="family-name" required><label for="a2">Segundo apellido</label><input id="a2"><label for="nom">Nombre</label><input id="nom" autocomplete="given-name" required><button type="submit">Buscar mis datos</button></form></section>
-<section class="card"><h2>Resultados</h2><div id="estado" class="alert" role="status">Comprobando si hay datos oficiales cargados…</div><div id="resultados"></div></section>
-<section class="card"><h2>Fuentes oficiales</h2><p>La consulta pública y los trámites protegidos siguen estando en la <a href="https://www.san.gva.es/es/web/recursos-humans/activacion-o-desactivacion-de-bolsa" target="_blank" rel="noopener">web de la Conselleria de Sanidad</a>.</p><p class="muted">La posición estimada solo podrá calcularse si disponemos de listados y estados de contratación fechados y contrastables. Una contratación histórica no prueba que la persona siga no disponible.</p></section>
-<small class="muted">Proyecto no oficial. No se solicitan DNI, certificados ni contraseñas. No se guardan tus búsquedas.</small></main>
-<script>
-let registros=[],fecha=null;
-const norm=s=>(s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase().replace(/\s+/g,' ');
-const estado=document.getElementById('estado'),resultados=document.getElementById('resultados');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-(async()=>{try{const r=await fetch('./data/resultados.json',{cache:'no-store'});if(!r.ok)throw Error('Sin fichero de datos');const d=await r.json();if(!Array.isArray(d.registros))throw Error('Formato incorrecto');registros=d.registros;fecha=d.actualizado||'sin fecha';estado.textContent='Datos disponibles: '+registros.length+' registros · Actualización: '+fecha+'.';}catch(e){estado.textContent='Aún no se han cargado listados oficiales verificados. La búsqueda no puede devolver resultados reales por ahora.';}})();
-document.getElementById('form').addEventListener('submit',e=>{e.preventDefault();resultados.innerHTML='';if(!registros.length){estado.textContent='No hay datos oficiales cargados. No se mostrarán resultados ficticios.';return;}const a=norm(document.getElementById('a1').value),b=norm(document.getElementById('a2').value),n=norm(document.getElementById('nom').value);const found=registros.filter(x=>norm(x.apellido1)===a&&(!b||norm(x.apellido2)===b)&&norm(x.nombre)===n);estado.textContent=found.length?'Coincidencias: '+found.length+' · Fuente actualizada: '+fecha:'No se encontraron coincidencias en los listados actualmente cargados. Esto no significa que no estés inscrito.';for(const x of found){const el=document.createElement('div');el.className='result';el.innerHTML='<strong>'+esc(x.nombre)+' '+esc(x.apellido1)+' '+esc(x.apellido2)+'</strong><p><span class="pill">'+esc(x.categoria||'Categoría no indicada')+'</span></p><p>Departamento: '+esc(x.departamento||'Sin dato')+'<br>Turno: '+esc(x.turno||'Sin dato')+'<br>Puntos: '+esc(x.puntos??'Sin dato')+'<br>Posición oficial: '+esc(x.posicion??'Sin dato')+'<br>Estado: '+esc(x.estado||'No verificado')+'</p>';resultados.appendChild(el);}});
-</script></body></html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#075e83"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.svg">
+<title>Mi Bolsa Sanidad CV</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><h1>♥ Mi Bolsa Sanidad CV</h1><p>Consulta independiente · tus datos solo se guardan en este dispositivo</p></header>
+<nav id="tabs"><button data-v="bolsas" class="on">Mis bolsas</button><button data-v="importar">Importar</button><button data-v="ajustes">Ajustes</button></nav>
+<main>
+<section id="v-bolsas"><div id="aviso" class="alert"></div><div id="lista"></div><div id="detalle"></div></section>
+
+<section id="v-importar" hidden>
+<div class="card"><h2>1. Captura en la web oficial</h2>
+<ol><li>Abre la <a href="https://svsiscv.san.gva.es/btt-consulta/pages/index.xhtml?idioma=es&iframe=1&version=0" target="_blank" rel="noopener">consulta oficial</a> (en pestaña propia, no incrustada).</li>
+<li>Elige turno, categoría y departamento, resuelve el CAPTCHA y pulsa para obtener el listado.</li>
+<li>Ejecuta el marcador <b>Capturar bolsa</b> (<a href="instalar.html">instalarlo</a>) y pulsa <b>Copiar</b>.</li>
+<li>Si el listado tiene varias páginas, repite en cada página: las capturas se fusionan.</li></ol></div>
+<div class="card"><h2>2. Pega la captura</h2>
+<textarea id="pegado" placeholder="Pega aquí la captura copiada"></textarea>
+<button id="btnLeer">Leer captura</button>
+<div id="prev" hidden>
+<p id="prevInfo" class="muted"></p>
+<label>Categoría<select id="selCat"></select></label>
+<label>Departamento<input id="selDep" list="deps"><datalist id="deps"></datalist></label>
+<label>Turno<select id="selTurno"><option value="O">Ordinario</option><option value="M">Promoción interna temporal</option></select></label>
+<label>Fecha de publicación<input type="date" id="selFecha"></label>
+<details><summary>Columnas detectadas</summary><div id="cols" class="muted"></div></details>
+<button id="btnGuardar">Guardar instantánea</button></div>
+<div id="impMsg" class="muted" role="status"></div></div>
+</section>
+
+<section id="v-ajustes" hidden>
+<div class="card"><h2>Persona a seguir</h2>
+<label>Apellidos (como figuran en el listado)<input id="apellidos" autocomplete="off"></label>
+<label>Nombre<input id="nombre" autocomplete="off"></label>
+<button id="btnPerfil">Guardar</button></div>
+<div class="card"><h2>Copia de seguridad</h2>
+<button id="btnExp">Exportar datos</button><button id="btnImp" class="sec">Importar copia</button><input type="file" id="fileImp" accept="application/json" hidden>
+<button id="btnBorrar" class="danger">Borrar todo</button><div id="ajMsg" class="muted"></div></div>
+</section>
+<small class="muted">Proyecto no oficial. Fuente: portal de la Conselleria de Sanidad. No se envía ningún dato a servidores.</small>
+</main>
+<script src="lib.js"></script><script src="app.js"></script>
+</body></html>
